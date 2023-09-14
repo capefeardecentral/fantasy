@@ -8,13 +8,34 @@ defmodule Fantasy.Underdog do
   def get_props(sport) do
     {:ok, response} = make_request("over_under_lines")
 
-    data = Poison.decode!(response.body)
+    data = Poison.decode!(response.body, keys: :atoms)
 
-    appearances = Map.get(data, "appearances")
-    over_under = Map.get(data, "over_under_lines")
-    players = Map.get(data, "players")
+    appearances = data.appearances
+    over_under = data.over_under_lines
+    players = data.players
 
-    get_players(players, "CFB")
+    players = get_players(players, sport)
+
+    filtered_appearances =
+      Enum.filter(appearances, fn %{player_id: player_id} ->
+        Map.has_key?(players, player_id)
+      end)
+
+    Enum.map(filtered_appearances, fn %{id: appearance_id, player_id: player_id} ->
+      player = players[player_id]
+
+      ou_data =
+        Enum.find(over_under, fn ou ->
+          ou.over_under.appearance_stat.appearance_id == appearance_id
+        end)
+
+      %{
+        player_name: player,
+        stat: ou_data.over_under.appearance_stat.stat,
+        over_under: ou_data.stat_value,
+        title: ou_data.over_under.title
+      }
+    end)
   end
 
   defp make_request(endpoint) do
@@ -28,10 +49,10 @@ defmodule Fantasy.Underdog do
 
   defp get_players(players, sport) do
     Enum.map(players, fn player ->
-      if player["sport_id"] == sport do
+      if player.sport_id == sport do
         %{
-          id: player["id"],
-          name: player["first_name"] <> " " <> player["last_name"]
+          id: player.id,
+          name: player.first_name <> " " <> player.last_name
         }
       end
     end)
