@@ -5,6 +5,46 @@ defmodule Fantasy.Underdog do
 
   @api_root "https://api.underdogfantasy.com/beta/v4/"
 
+  def merge_projections_and_props(projections) do
+    props =
+      get_props("CFB")
+      |> Enum.map(fn prop ->
+        projection =
+          Enum.find(projections, fn projection ->
+            projection["Player Name"] == prop.player_name
+          end)
+
+        IO.inspect(projection)
+
+        if projection do
+          case prop.stat do
+            "rushing_yds" ->
+              prop = Map.put(prop, :projection, projection["RuYds"])
+
+            "receiving_yds" ->
+              prop = Map.put(prop, :projection, projection["ReYds"])
+
+            "passing_yds" ->
+              prop = Map.put(prop, :projection, projection["PaYds"])
+
+            "rushing_tds" ->
+              prop = Map.put(prop, :projection, projection["RuTd"])
+
+            "receiving_tds" ->
+              prop = Map.put(prop, :projection, projection["ReTd"])
+
+            "passing_tds" ->
+              prop = Map.put(prop, :projection, projection["PaTd"])
+
+            _ ->
+              prop = Map.put(prop, :projection, nil)
+          end
+        end
+
+        prop
+      end)
+  end
+
   def get_props(sport) do
     {:ok, response} = make_request("over_under_lines")
 
