@@ -11,6 +11,6 @@ defmodule Fantasy.Util do
     |> Path.expand(__DIR__)
     |> File.stream!()
     |> CSV.decode!(headers: true)
-    |> Enum.to_list
+    |> Enum.to_list()
   end
 end

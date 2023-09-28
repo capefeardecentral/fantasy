@@ -14,35 +14,48 @@ defmodule Fantasy.Underdog do
             projection["Player Name"] == prop.player_name
           end)
 
-        IO.inspect(projection)
-
         if projection do
-          case prop.stat do
-            "rushing_yds" ->
-              prop = Map.put(prop, :projection, projection["RuYds"])
+          prop_with_projection =
+            case prop.stat do
+              "rushing_yds" ->
+                Map.put(prop, :projection, projection["RuYds"])
 
-            "receiving_yds" ->
-              prop = Map.put(prop, :projection, projection["ReYds"])
+              "receiving_yds" ->
+                Map.put(prop, :projection, projection["ReYds"])
 
-            "passing_yds" ->
-              prop = Map.put(prop, :projection, projection["PaYds"])
+              "passing_yds" ->
+                Map.put(prop, :projection, projection["PaYds"])
 
-            "rushing_tds" ->
-              prop = Map.put(prop, :projection, projection["RuTd"])
+              "rushing_tds" ->
+                Map.put(prop, :projection, projection["RuTD"])
 
-            "receiving_tds" ->
-              prop = Map.put(prop, :projection, projection["ReTd"])
+              "receiving_tds" ->
+                Map.put(prop, :projection, projection["ReTD"])
 
-            "passing_tds" ->
-              prop = Map.put(prop, :projection, projection["PaTd"])
+              "passing_tds" ->
+                Map.put(prop, :projection, projection["PaTD"])
 
-            _ ->
-              prop = Map.put(prop, :projection, nil)
-          end
+              "rush_rec_tds" ->
+                if projection["RuTD"] && projection["ReTD"] do
+                  summed_tds =
+                    to_float_or_zero(projection["RuTD"]) + to_float_or_zero(projection["ReTD"])
+
+                  Map.put(prop, :projection, summed_tds)
+                else
+                  Map.put(prop, :projection, nil)
+                end
+
+              _ ->
+                Map.put(prop, :projection, nil)
+            end
+
+          prop_with_projection
+        else
+          prop
         end
-
-        prop
       end)
+
+    props
   end
 
   def get_props(sport) do
@@ -101,4 +114,7 @@ defmodule Fantasy.Underdog do
       Map.put(acc, id, name)
     end)
   end
+
+  defp to_float_or_zero(""), do: 0.0
+  defp to_float_or_zero(str), do: String.to_float(str)
 end
