@@ -92,11 +92,17 @@ defmodule Fantasy.Underdog do
   end
 
   def get_prop_delta(props) do
-    Enum.filter(props, fn prop -> Map.has_key?(prop, :projection)end)
+    Enum.filter(props, fn prop -> Map.has_key?(prop, :projection) end)
     |> Enum.filter(fn prop -> prop.projection != nil end)
     |> Enum.filter(fn prop -> prop.projection != "" end)
-    |> Enum.map(fn prop -> if is_float(prop.projection) do prop else Map.put(prop, :projection, String.to_float(prop.projection))end end)
-    |> Enum.map(fn prop -> Map.put(prop, :over_under, String.to_float(prop.over_under))end)
+    |> Enum.map(fn prop ->
+      if is_float(prop.projection) do
+        prop
+      else
+        Map.put(prop, :projection, String.to_float(prop.projection))
+      end
+    end)
+    |> Enum.map(fn prop -> Map.put(prop, :over_under, String.to_float(prop.over_under)) end)
     |> Enum.map(fn prop -> Map.put(prop, :delta, prop.projection - prop.over_under) end)
   end
 
