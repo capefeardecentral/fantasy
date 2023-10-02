@@ -2,7 +2,7 @@ defmodule Fantasy.CFBStats do
   use Crawly.Spider
   @impl Crawly.Spider
   def base_url do
-    "https://cfbstats.com/"
+    "https://cfbstats.com"
   end
 
   @impl Crawly.Spider
@@ -18,6 +18,8 @@ defmodule Fantasy.CFBStats do
   def parse_item(response) do
     {:ok, document} = Floki.parse_document(response.body)
 
+    IO.inspect(response)
+
     urls =
       document
       |> Floki.find("div.conferences div.conference ul li a")
@@ -25,7 +27,7 @@ defmodule Fantasy.CFBStats do
 
     requests =
       Enum.map(urls, fn url ->
-        build_absolute_url(url, response.url)
+        build_absolute_url(url)
         |> Crawly.Utils.request_from_url()
       end)
 
@@ -43,10 +45,11 @@ defmodule Fantasy.CFBStats do
     }
   end
 
-  defp build_absolute_url(url, request_url) do
-    IO.inspect(url)
+  defp build_absolute_url(request_url) do
     IO.inspect(request_url)
-    URI.merge(request_url, url)
+    IO.inspect(base_url)
+
+    URI.merge(base_url, request_url)
     |> to_string()
   end
 end
