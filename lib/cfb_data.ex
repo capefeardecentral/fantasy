@@ -1,5 +1,5 @@
 defmodule Fantasy.CFBData do
-  @team_data load_team_data
+  @team_data File.read!("data/cfb_data_teams.json") |> Poison.decode!()
 
   def get_team_stats(team, year) do
     endpoint = "stats/season"
@@ -9,7 +9,8 @@ defmodule Fantasy.CFBData do
       "team" => team
     }
 
-    make_request(endpoint, params)
+    {_, stats} = make_request(endpoint, params)
+    Poison.decode!(stats.body)
   end
 
   def get_team_player_stats(team, year) do
@@ -101,29 +102,34 @@ defmodule Fantasy.CFBData do
       acc = Map.put(acc, "rushing_yds", acc["rushing_yds"] + rushing_yds)
       acc = Map.put(acc, "passing_tds", acc["passing_tds"] + passing_tds)
       acc = Map.put(acc, "passing_yds", acc["passing_yds"] + passing_yds)
-      acc = Map.put(acc, "total_yds", acc["total_yds"] + total_yds)
+      Map.put(acc, "total_yds", acc["total_yds"] + total_yds)
     end)
   end
 
-  def load_team_data() do
-    {:ok, data} = File.read("data/cfb_data_teams.json")
-    Poison.decode!(data)
-  end
-
-  defp find_team_id_by_name(name) do
+  def find_team_id_by_name(name) do
     team =
       Enum.find(@team_data, fn team ->
-        team["school"] == name ||
-          team["alt_name1"] == name ||
-          team["alt_name2"] == name ||
-          team["alt_name3"] == name
+        compare_team_names(team["school"], name) ||
+          compare_team_names(team["alt_name1"], name) ||
+          compare_team_names(team["alt_name2"], name) ||
+          compare_team_names(team["alt_name3"], name)
       end)
 
     if team do
-      team["id"]
+      %{team: team["school"], id: team["id"]}
     else
       nil
     end
+  end
+
+  defp compare_team_names(nil, _), do: false
+  defp compare_team_names(_, nil), do: false
+
+  defp compare_team_names(name1, name2) do
+    name1 = String.downcase(name1)
+    name2 = String.downcase(name2)
+
+    name1 == name2
   end
 
   def validate_teams(teams) do
@@ -132,8 +138,8 @@ defmodule Fantasy.CFBData do
         nil ->
           {:halt, {:error, "Team not recognized: #{name}"}}
 
-        id ->
-          {:cont, acc ++ [%{team: name, id: id}]}
+        data ->
+          {:cont, acc ++ [data]}
       end
     end)
   end

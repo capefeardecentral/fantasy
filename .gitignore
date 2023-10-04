@@ -26,3 +26,5 @@ fantasy-*.tar
 /tmp/
 
 .idea
+
+dets_simple_storage
