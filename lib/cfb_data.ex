@@ -132,6 +132,31 @@ defmodule Fantasy.CFBData do
     name1 == name2
   end
 
+  def compile_player_stats(stats) do
+    %{
+      "passing" => get_category_stats(stats, "passing"),
+      "rushing" => get_category_stats(stats, "rushing"),
+      "receiving" => get_category_stats(stats, "receiving")
+    }
+  end
+
+  defp get_category_stats(stats, category) do
+    passing_stats = Enum.filter(stats, fn stat -> stat["category"] == category end)
+
+    players =
+      Enum.map(passing_stats, fn stat -> stat["player"] end)
+      |> Enum.uniq()
+
+    Enum.map(players, fn player ->
+      player_stats =
+        Enum.filter(passing_stats, fn stat -> stat["player"] == player end)
+        |> Enum.reduce(%{"player" => player}, fn stat, acc ->
+          IO.inspect(stat)
+          Map.put(acc, stat["statType"], stat["stat"])
+        end)
+    end)
+  end
+
   def validate_teams(teams) do
     Enum.reduce_while(teams, [], fn name, acc ->
       case find_team_id_by_name(name) do
