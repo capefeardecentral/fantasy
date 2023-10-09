@@ -158,15 +158,24 @@ defmodule Fantasy.CFBData do
   end
 
   def validate_teams(teams) do
-    Enum.reduce_while(teams, [], fn name, acc ->
-      case find_team_id_by_name(name) do
-        nil ->
-          {:halt, {:error, "Team not recognized: #{name}"}}
+    isValid =
+      Enum.reduce_while(teams, [], fn name, acc ->
+        case find_team_id_by_name(name) do
+          nil ->
+            {:halt, {:error, "Team not recognized: #{name}"}}
 
-        data ->
-          {:cont, acc ++ [data]}
-      end
-    end)
+          data ->
+            {:cont, acc ++ [data]}
+        end
+      end)
+
+    case isValid do
+      {:error, error} ->
+        {:error, error}
+
+      _ ->
+        {:ok, isValid}
+    end
   end
 
   def make_request(endpoint, params \\ %{}) do
