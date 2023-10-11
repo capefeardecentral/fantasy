@@ -51,6 +51,20 @@ defmodule Fantasy.CFBData do
     Poison.decode!(odds.body)
   end
 
+  def get_week_games(week, year) do
+    endpoint = "games"
+
+    params = %{
+      "year" => year,
+      "week" => week,
+      "division" => "fbs"
+    }
+
+    make_request(endpoint, params)
+    {_, games} = make_request(endpoint, params)
+    Poison.decode!(games.body)
+  end
+
   def compile_season_defense_stats(games, offense_team) do
     # get opponents from each game
     opponent_stats =
